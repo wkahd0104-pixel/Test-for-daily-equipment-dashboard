@@ -447,3 +447,38 @@
     </script>
 </body>
 </html>
+
+<style>
+    .nav-switch-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+    .nav-switch {
+        display: flex;
+        background-color: #e0e0e0;
+        border-radius: 25px;
+        overflow: hidden;
+        width: 240px;
+    }
+    .nav-switch a {
+        flex: 1;
+        text-align: center;
+        padding: 10px 0;
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .nav-switch a.active {
+        background-color: #007bff;
+        color: white;
+    }
+</style>
+
+<div class="nav-switch-container">
+    <div class="nav-switch">
+        <a href="index.html">Main</a>
+        <a href="sub.html" class="active">Sub</a>
+    </div>
+</div>
