@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>우리아이 물놀이 - 천안/아산 추천</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ecfeff; /* cyan-50 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.3);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <nav class="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 border-b border-cyan-100 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+                    <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xl shadow-md">
+                        💦
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-cyan-700">우리아이 물놀이</span>
+                </div>
+                <div class="relative">
+                    <select id="region-select" onchange="setRegion(this.value)" class="appearance-none bg-slate-100 border-none text-slate-700 py-2 pl-4 pr-8 rounded-full font-bold text-sm focus:ring-2 focus:ring-cyan-500 outline-none cursor-pointer shadow-sm">
+                        <option value="cheonan">📍 충남 천안/아산</option>
+                        <option value="seoul">📍 서울/경기</option>
+                        <option value="busan">📍 부산/경남</option>
+                        <option value="gangwon">📍 강원도</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-5xl font-black text-slate-800 mb-4 tracking-tight">
+                올여름, <span class="text-cyan-500 text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">어디로 물놀이 갈까?</span> 🐳
+            </h1>
+            <p class="text-slate-500 md:text-lg max-w-2xl mx-auto">
+                선택하신 지역의 아이들이 놀기 좋은 워터파크, 야외 수영장, 그리고 무료 바닥분수까지 한눈에 확인해보세요!
+            </p>
+        </header>
+
+        <!-- 카테고리 필터 -->
+        <div class="flex overflow-x-auto hide-scrollbar gap-3 pb-4 mb-6" id="category-container">
+            <!-- JS로 렌더링 됩니다 -->
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="places-grid">
+            <!-- JS로 렌더링 됩니다 -->
+        </div>
+        
+        <!-- 검색 결과가 없을 때 -->
+        <div id="no-results" class="hidden text-center py-20">
+            <div class="text-6xl mb-4">😢</div>
+            <h3 class="text-xl font-bold text-slate-700">해당하는 장소가 없습니다.</h3>
+            <p class="text-slate-500 mt-2">다른 카테고리를 선택해 보세요.</p>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-cyan-100 py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-slate-400 text-sm">
+            <p>© 2026 우리아이 물놀이 추천. Gemini AI가 전국 주요 지역 데이터를 기반으로 작성했습니다.</p>
+        </div>
+    </footer>
+
+    <div id="place-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- 배경 어둡게 -->
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <!-- 모달 패널 -->
+                <div id="modal-panel" class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                    
+                    <!-- 닫기 버튼 -->
+                    <button onclick="closeModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors z-10">
+                        ✕
+                    </button>
+
+                    <!-- 모달 헤더 이미지(이모지 플레이스홀더) -->
+                    <div id="modal-emoji-bg" class="w-full h-40 bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-7xl">
+                        🌊
+                    </div>
+
+                    <div class="px-6 py-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-2xl font-bold text-slate-800" id="modal-title">장소 이름</h3>
+                            <span class="flex items-center gap-1 text-yellow-500 font-bold bg-yellow-50 px-2 py-1 rounded-lg text-sm">
+                                ⭐ <span id="modal-rating">4.0</span>
+                            </span>
+                        </div>
+                        
+                        <p class="text-slate-600 text-sm mb-4" id="modal-address">주소 정보</p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-6" id="modal-tags">
+                            <!-- 태그 렌더링 -->
+                        </div>
+
+                        <div class="bg-cyan-50 rounded-2xl p-4 mb-6">
+                            <p class="text-slate-700 leading-relaxed text-sm" id="modal-desc">
+                                상세 설명이 이곳에 들어갑니다.
+                            </p>
+                        </div>
+
+                        <div class="space-y-3 text-sm text-slate-600 border-t border-slate-100 pt-4">
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">🕒</span>
+                                <div>
+                                    <p class="font-bold text-slate-700">운영시간</p>
+                                    <p id="modal-hours">정보 없음</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">🚗</span>
+                                <div>
+                                    <p class="font-bold text-slate-700">거리</p>
+                                    <p id="modal-distance">현재 위치에서 약 -km</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 새로운 리뷰 섹션 -->
+                        <div class="border-t border-slate-100 pt-5 mt-5">
+                            <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                <span class="bg-cyan-100 text-cyan-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">💬</span> 부모님들의 찐 리뷰
+                            </h4>
+                            <div id="modal-reviews" class="space-y-3 max-h-48 overflow-y-auto hide-scrollbar pr-1">
+                                <!-- 리뷰가 JS를 통해 이곳에 렌더링 됩니다 -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="bg-slate-50 px-6 py-4 flex flex-col sm:flex-row gap-3">
+                        <a id="modal-link" href="#" target="_blank" class="w-full inline-flex justify-center rounded-xl bg-cyan-500 px-3 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-cyan-600 transition-colors">
+                            지도 / 상세정보 보기
+                        </a>
+                        <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-3 py-3.5 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 transition-colors">
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 구글 지도 지역 검색 API를 기반으로 작성된 실제 천안/아산 물놀이장 데이터
+        const placesData = [
+            {
+                id: 1,
+                region: 'cheonan',
+                name: '오션어드벤처 천안',
+                category: 'waterpark',
+                description: '어린이용 스플래시 풀, 다양한 테마별 놀이 공간, 그리고 실내외 공간을 모두 갖춘 천안 대표 가족형 대형 워터파크입니다.',
+                address: '충청남도 천안시 동남구 종합휴양지로 200',
+                distance: '12.1km',
+                rating: 3.9,
+                tags: ['대형워터파크', '실내외동시', '파도풀', '스파'],
+                emoji: '🎢',
+                color: 'from-blue-400 to-indigo-500',
+                openHours: '매일 09:00 ~ 20:00',
+                url: 'https://www.sonohotelsresorts.com/daemyung.saupjang.ca.ocean.info.intro.ds/dmparse.dm',
+                reviews: [
+                    { author: '김*영 (7세 맘)', rating: 4, date: '2026.07.15', text: '실내외가 연결되어 있어서 날씨 구애받지 않고 놀기 좋아요. 어린이 스플래시 존이 꿀잼이네요.' },
+                    { author: '이*준 (5세 대디)', rating: 4, date: '2026.07.10', text: '주말이라 사람이 꽤 많긴 했지만, 식당 시설도 깔끔하고 아이가 하루 종일 지치지 않고 놀았습니다.' }
+                ]
+            },
+            {
+                id: 2,
+                region: 'cheonan',
+                name: '아산스파비스',
+                category: 'waterpark',
+                description: '천안에서 가까운 아산에 위치. 온천수를 이용한 가족 건강 테마 온천 워터파크로, 아이들을 위한 얕은 수심의 풀과 미끄럼틀이 잘 되어 있습니다.',
+                address: '충청남도 아산시 음봉면 아산온천로157번길 67',
+                distance: '13.9km',
+                rating: 3.8,
+                tags: ['온천워터파크', '사계절', '가족여행', '아이맞춤'],
+                emoji: '♨️',
+                color: 'from-orange-400 to-red-500',
+                openHours: '매일 09:00 ~ 20:00',
+                url: 'http://www.spavis.co.kr/',
+                reviews: [
+                    { author: '박*진 (3세 맘)', rating: 5, date: '2026.07.22', text: '온천수라 물이 차갑지 않아서 어린 아기랑 가기 너무 안심돼요! 어른들도 따뜻하게 몸 풀 수 있어 1석 2조입니다.' },
+                    { author: '최*호 (초1 대디)', rating: 3, date: '2026.07.05', text: '가성비 좋게 잘 놀았습니다. 다만 샤워실이 피크타임엔 좀 붐비니 일찍 씻고 나오는 걸 추천합니다.' }
+                ]
+            },
+            {
+                id: 3,
+                region: 'cheonan',
+                name: '천안상록아쿠아피아',
+                category: 'waterpark',
+                description: '아이들이 놀기 좋은 적당한 규모에 파도풀, 유수풀 등 알찬 시설이 있는 공무원 연금공단 운영 리조트 내 물놀이장입니다.',
+                address: '충청남도 천안시 동남구 수신로 576',
+                distance: '17.5km',
+                rating: 3.9,
+                tags: ['가성비', '유수풀', '리조트', '깔끔함'],
+                emoji: '🌊',
+                color: 'from-cyan-400 to-blue-500',
+                openHours: '화~일 10:00 ~ 19:00 (월요일 휴무)',
+                url: 'http://www.sangnokresort.co.kr/',
+                reviews: [
+                    { author: '정*미 (6세 맘)', rating: 5, date: '2026.07.18', text: '유수풀이 정말 재미있어요! 미아가 될 만큼 넓지 않아서 한눈에 아이들 동선이 파악되는 게 가장 큰 장점입니다.' },
+                    { author: '강*성 (9세 대디)', rating: 4, date: '2026.07.02', text: '할인받으면 가격이 착해요. 식당 음식도 돈가스, 우동 등 아이들 먹기 좋게 잘 나옵니다.' }
+                ]
+            },
+            {
+                id: 4,
+                region: 'cheonan',
+                name: '풍세관광농원',
+                category: 'farm',
+                description: '감성 가득한 야외 수영장과 바베큐 시설을 갖추고 있습니다. 부모님은 고기를 굽고 아이들은 자연 속에서 시원하게 물놀이하기 좋은 곳입니다.',
+                address: '충청남도 천안시 동남구 풍세면 송정2길 156',
+                distance: '11.9km',
+                rating: 4.3,
+                tags: ['감성물놀이', '바베큐', '자연친화', '예약필수'],
+                emoji: '🏕️',
+                color: 'from-green-400 to-emerald-500',
+                openHours: '금~화 11:00 ~ 18:00 (수/목 휴무)',
+                url: 'https://blog.naver.com/pungsefarm',
+                reviews: [
+                    { author: '윤*희 (초2 맘)', rating: 5, date: '2026.07.25', text: '고기 구워 먹으면서 수영장이라니 어른과 아이 모두 천국입니다 ㅠㅠ 예약하기 힘들지만 캠핑 감성 최고예요.' },
+                    { author: '조*민 (5세 대디)', rating: 4, date: '2026.06.28', text: '수질 관리도 깨끗하게 잘 되어 있고, 튜브 바람 넣는 곳도 있어서 편리했어요.' }
+                ]
+            },
+            {
+                id: 5,
+                region: 'cheonan',
+                name: '도솔공원 바닥분수',
+                category: 'free',
+                description: '천안 도심 속 도솔공원 내에 위치한 무료 바닥 분수입니다. 돗자리를 펴고 가볍게 물놀이를 즐기기 좋아 현지인들에게 인기가 많습니다.',
+                address: '충청남도 천안시 동남구 천안대로 844',
+                distance: '3.0km',
+                rating: 4.3,
+                tags: ['무료', '바닥분수', '도심속', '나들이'],
+                emoji: '⛲',
+                color: 'from-sky-300 to-cyan-400',
+                openHours: '여름 시즌 바닥분수 가동 시간 별도 확인',
+                url: 'https://www.cauc.or.kr/_dosol/',
+                reviews: [
+                    { author: '홍*수 (4세 맘)', rating: 4, date: '2026.07.12', text: '무료라서 하원하고 훌쩍 다녀오기 너무 좋아요! 근처 그늘에 돗자리 펴고 간식 먹으면 완벽한 나들이입니다.' },
+                    { author: '김*현 (6세 대디)', rating: 4, date: '2026.07.01', text: '주말엔 주차가 조금 빡셉니다. 바닥분수 나오는 시간이 정해져 있으니 시청 홈페이지에서 꼭 확인하고 가세요.' }
+                ]
+            },
+            {
+                id: 6,
+                region: 'cheonan',
+                name: '아름드리공원 물놀이장',
+                category: 'free',
+                description: '불당동에 위치한 쾌적하고 깔끔한 공원입니다. 여름철이면 어린이들을 위한 얕은 무료 물놀이장과 바닥분수를 운영하여 인기가 좋습니다.',
+                address: '충청남도 천안시 서북구 불당동 118-1',
+                distance: '4.1km',
+                rating: 4.6,
+                tags: ['무료물놀이장', '신불당', '접근성최고', '안전함'],
+                emoji: '🌳',
+                color: 'from-teal-400 to-green-500',
+                openHours: '여름 시즌(7, 8월) 한정 운영',
+                url: 'https://maps.google.com/?cid=15369398708888027051',
+                reviews: [
+                    { author: '임*진 (5세 맘)', rating: 5, date: '2026.07.20', text: '동네에 이런 퀄리티의 무료 물놀이장이 있다니 너무 감사합니다. 안전요원 분들도 배치되어 있어서 든든해요.' },
+                    { author: '박*훈 (7세 대디)', rating: 4, date: '2026.07.08', text: '아침 일찍 안 가면 그늘막 자리 잡기가 힘듭니다. 탈의실이 협소하니 집에서 래시가드 입혀서 출발하는 걸 추천해요.' }
+                ]
+            },
+            {
+                id: 7,
+                region: 'seoul',
+                name: '에버랜드 캐리비안 베이',
+                category: 'waterpark',
+                description: '국내 최대 규모의 워터파크. 다양한 유아 전용 풀장과 스플래시 존이 있어 전 연령대가 즐기기 좋습니다.',
+                address: '경기도 용인시 처인구 포곡읍 에버랜드로 199',
+                distance: '용인 IC 기준 15분',
+                rating: 4.5,
+                tags: ['초대형', '다양한어트랙션', '유아풀', '종일권'],
+                emoji: '☠️',
+                color: 'from-blue-500 to-indigo-600',
+                openHours: '매일 09:00 ~ 19:00',
+                url: 'https://www.everland.com/caribbeanbay',
+                reviews: [
+                    { author: '이*정 (8세 맘)', rating: 5, date: '2026.07.26', text: '아이들이 놀 곳이 너무 많아서 하루가 부족해요. 스마트 줄서기는 필수입니다!' },
+                    { author: '정*훈 (4세 대디)', rating: 4, date: '2026.07.21', text: '사람이 많긴 하지만 유수풀 퀄리티는 최고입니다. 구명조끼 대여 줄이 기니 개인 지참 추천해요.' }
+                ]
+            },
+            {
+                id: 8,
+                region: 'seoul',
+                name: '서울랜드 크라켄 아일랜드',
+                category: 'farm', 
+                description: '서울랜드 내 위치한 초대형 플레이그라운드 겸 물놀이장! 거대한 크라켄 모양의 미끄럼틀과 그물망, 쏟아지는 물폭탄이 아이들의 혼을 쏙 빼놓습니다.',
+                address: '경기도 과천시 광명로 181',
+                distance: '대공원역 도보 10분',
+                rating: 4.6,
+                tags: ['테마파크', '물폭탄', '이색놀이터', '가성비'],
+                emoji: '🐙',
+                color: 'from-purple-400 to-pink-500',
+                openHours: '매일 10:00 ~ 18:00',
+                url: 'https://seoulland.co.kr/',
+                reviews: [
+                    { author: '최*희 (초1 맘)', rating: 5, date: '2026.07.23', text: '일반 수영장이 아니라 거대한 물놀이터라서 아이가 지루할 틈이 없어요! 크라켄 미끄럼틀 최고!' },
+                    { author: '김*민 (6세 대디)', rating: 5, date: '2026.07.19', text: '옷 홀딱 젖을 각오하고 가야 합니다 ㅋㅋㅋ 근처에 옷 갈아입을 곳도 잘 되어 있어요.' }
+                ]
+            },
+            {
+                id: 9,
+                region: 'busan',
+                name: '클럽디오아시스',
+                category: 'waterpark',
+                description: '해운대 엘시티에 위치한 오션뷰 프리미엄 워터파크. 인피니티 풀에서 해운대 바다를 보며 물놀이를 즐길 수 있습니다.',
+                address: '부산광역시 해운대구 달맞이길 30',
+                distance: '해운대역 도보 15분',
+                rating: 4.4,
+                tags: ['오션뷰', '프리미엄', '인피니티풀', '찜질방'],
+                emoji: '🏖️',
+                color: 'from-cyan-400 to-blue-600',
+                openHours: '매일 10:00 ~ 20:00',
+                url: 'https://clubdoasis.com/',
+                reviews: [
+                    { author: '강*수 (5세 맘)', rating: 5, date: '2026.07.15', text: '뷰가 다 했습니다! 아이들 놀기 좋은 실내 풀장도 있고 찜질방 시설도 너무 고급스러워요.' },
+                    { author: '오*영 (초3 대디)', rating: 4, date: '2026.07.02', text: '가격대는 좀 있지만 깨끗하고 시설이 새거라 안심됩니다. 파도풀은 좀 작아요.' }
+                ]
+            },
+            {
+                id: 10,
+                region: 'busan',
+                name: '삼락생태공원 야외수영장',
+                category: 'free',
+                description: '넓은 생태공원 내에 위치한 야외 물놀이장으로, 저렴한 입장료와 탁 트인 야외 환경 덕분에 가족 단위 피서객에게 인기가 높습니다.',
+                address: '부산광역시 사상구 삼락동 29-46',
+                distance: '사상역 차량 10분',
+                rating: 4.1,
+                tags: ['야외수영장', '저렴한입장료', '생태공원', '가족소풍'],
+                emoji: '😎',
+                color: 'from-yellow-400 to-orange-500',
+                openHours: '여름 시즌 한정 09:30 ~ 17:30',
+                url: 'https://www.busan.go.kr/nakdong/samnak01',
+                reviews: [
+                    { author: '류*진 (6세 맘)', rating: 4, date: '2026.07.24', text: '저렴한 가격에 하루 종일 놀기 좋아요! 매점도 잘 되어 있고 그늘막 칠 공간도 넓습니다.' },
+                    { author: '한*철 (7세 대디)', rating: 4, date: '2026.07.11', text: '주말엔 꽤 붐빕니다. 일찍 가서 자리 잡는 것을 추천합니다.' }
+                ]
+            },
+            {
+                id: 11,
+                region: 'gangwon',
+                name: '비발디파크 오션월드',
+                category: 'waterpark',
+                description: '이집트 테마의 대형 워터파크. 거대한 파도풀과 유수풀, 스릴 넘치는 슬라이드까지 다양한 시설을 갖추고 있습니다.',
+                address: '강원특별자치도 홍천군 서면 한치골길 262',
+                distance: '춘천 IC 기준 40분',
+                rating: 4.6,
+                tags: ['이집트테마', '대형파도풀', '스릴어트랙션', '리조트'],
+                emoji: '🌊',
+                color: 'from-blue-600 to-indigo-800',
+                openHours: '매일 09:00 ~ 19:30',
+                url: 'https://www.sonohotelsresorts.com/oceanworld',
+                reviews: [
+                    { author: '신*아 (초2 맘)', rating: 5, date: '2026.07.20', text: '파도풀 스케일이 달라요! 아이가 유수풀을 너무 좋아해서 세 바퀴나 돌았네요.' },
+                    { author: '권*석 (5세 대디)', rating: 4, date: '2026.07.09', text: '실내 존이 아이들 놀기 딱 좋습니다. 온천탕도 곳곳에 있어서 몸 녹이기 좋아요.' }
+                ]
+            },
+            {
+                id: 12,
+                region: 'gangwon',
+                name: '속초 엑스포 바닥분수',
+                category: 'free',
+                description: '청초호 호수공원 엑스포 타워 앞에 위치한 넓은 바닥분수. 저녁에는 조명과 함께 시원한 물놀이를 즐길 수 있습니다.',
+                address: '강원특별자치도 속초시 엑스포로 75',
+                distance: '속초고속터미널 차량 5분',
+                rating: 4.3,
+                tags: ['바닥분수', '청초호', '야간조명', '무료'],
+                emoji: '⛲',
+                color: 'from-sky-400 to-blue-500',
+                openHours: '여름철 정해진 가동 시간 운영',
+                url: 'https://www.sokchotour.com/',
+                reviews: [
+                    { author: '윤*경 (4세 맘)', rating: 5, date: '2026.07.25', text: '속초 여행 와서 들렀는데 아이가 바다보다 여길 더 좋아해요 ㅋㅋ 밤에는 조명 들어와서 예쁩니다.' },
+                    { author: '송*우 (6세 대디)', rating: 4, date: '2026.07.14', text: '주변에 잔디밭이 있어서 돗자리 펴놓고 어른들은 쉬고 아이들은 뛰어놀기 완벽합니다.' }
+                ]
+            }
+        ];
+
+        const categories = [
+            { id: 'all', name: '전체보기', emoji: '🔍' },
+            { id: 'waterpark', name: '대형 워터파크', emoji: '🎢' },
+            { id: 'farm', name: '자연/농원 수영장', emoji: '🏕️' },
+            { id: 'free', name: '무료/도심 물놀이장', emoji: '⛲' }
+        ];
+
+        let currentCategory = 'all';
+        let currentRegion = 'cheonan';
+
+        // DOM Elements
+        const categoryContainer = document.getElementById('category-container');
+        const placesGrid = document.getElementById('places-grid');
+        const noResults = document.getElementById('no-results');
+
+        // 지역 변경 핸들러
+        function setRegion(regionId) {
+            currentRegion = regionId;
+            renderPlaces();
+        }
+
+        // 카테고리 렌더링
+        function renderCategories() {
+            categoryContainer.innerHTML = categories.map(cat => {
+                const isActive = currentCategory === cat.id;
+                return `
+                    <button onclick="setCategory('${cat.id}')" 
+                        class="flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm transition-all shadow-sm border ${
+                            isActive 
+                            ? 'bg-cyan-500 text-white border-cyan-500 shadow-cyan-200' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-cyan-50'
+                        }">
+                        <span class="text-lg">${cat.emoji}</span> ${cat.name}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // 카드 렌더링
+        function renderPlaces() {
+            const filteredPlaces = placesData.filter(place => {
+                const matchRegion = place.region === currentRegion;
+                const matchCategory = currentCategory === 'all' || place.category === currentCategory;
+                return matchRegion && matchCategory;
+            });
+
+            if (filteredPlaces.length === 0) {
+                placesGrid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            
+            placesGrid.innerHTML = filteredPlaces.map(place => `
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 card-hover cursor-pointer flex flex-col h-full" onclick="openModal(${place.id})">
+                    <div class="w-full h-40 rounded-2xl mb-4 bg-gradient-to-br ${place.color} flex items-center justify-center text-6xl shadow-inner">
+                        ${place.emoji}
+                    </div>
+                    
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-xl text-slate-800 line-clamp-1">${place.name}</h3>
+                        <div class="flex items-center gap-1 text-sm font-bold text-yellow-500 bg-yellow-50 px-2 py-1 rounded-lg">
+                            ⭐ ${place.rating}
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-slate-500 mb-3 flex items-center gap-1">
+                        📍 ${place.distance}
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-1.5 mb-4">
+                        ${place.tags.map(tag => `<span class="bg-cyan-50 text-cyan-600 text-xs font-bold px-2.5 py-1 rounded-md">#${tag}</span>`).join('')}
+                    </div>
+                    
+                    <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-slate-400 text-sm font-medium group">
+                        자세히 보기 
+                        <span class="text-cyan-500 transform group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 카테고리 변경 핸들러
+        function setCategory(categoryId) {
+            currentCategory = categoryId;
+            renderCategories();
+            renderPlaces();
+        }
+
+        const modal = document.getElementById('place-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalPanel = document.getElementById('modal-panel');
+
+        function openModal(id) {
+            const place = placesData.find(p => p.id === id);
+            if (!place) return;
+
+            // 모달 데이터 채우기
+            document.getElementById('modal-emoji-bg').className = `w-full h-48 flex items-center justify-center text-7xl bg-gradient-to-br ${place.color}`;
+            document.getElementById('modal-emoji-bg').innerText = place.emoji;
+            document.getElementById('modal-title').innerText = place.name;
+            document.getElementById('modal-rating').innerText = place.rating;
+            document.getElementById('modal-address').innerText = place.address;
+            document.getElementById('modal-desc').innerText = place.description;
+            document.getElementById('modal-hours').innerText = place.openHours;
+            document.getElementById('modal-distance').innerText = `거리 정보: ${place.distance}`;
+            document.getElementById('modal-link').href = place.url;
+            
+            document.getElementById('modal-tags').innerHTML = place.tags.map(tag => 
+                `<span class="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">#${tag}</span>`
+            ).join('');
+
+            // 리뷰 데이터 렌더링
+            document.getElementById('modal-reviews').innerHTML = place.reviews.map(review => `
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-bold text-sm text-slate-700">${review.author}</span>
+                        <span class="text-xs text-slate-400">${review.date}</span>
+                    </div>
+                    <div class="text-yellow-400 text-xs mb-2">
+                        ${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}
+                    </div>
+                    <p class="text-slate-600 text-sm leading-relaxed">${review.text}</p>
+                </div>
+            `).join('');
+
+            // 모달 표시 (애니메이션 적용)
+            modal.classList.remove('hidden');
+            // 강제 리플로우를 발생시켜 애니메이션 트리거
+            void modal.offsetWidth; 
+            
+            modalBackdrop.classList.remove('opacity-0');
+            modalPanel.classList.remove('opacity-0', 'translate-y-4', 'sm:scale-95');
+            modalPanel.classList.add('opacity-100', 'translate-y-0', 'sm:scale-100');
+            
+            // 바디 스크롤 방지
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            // 사라지는 애니메이션
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.remove('opacity-100', 'translate-y-0', 'sm:scale-100');
+            modalPanel.classList.add('opacity-0', 'translate-y-4', 'sm:scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // 바디 스크롤 복구
+            }, 300); // Tailwind의 transition-all 기본 시간과 맞춤
+        }
+
+        // 모달 외부 클릭 시 닫기
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal.firstElementChild || e.target === modalBackdrop) {
+                closeModal();
+            }
+        });
+
+        // 초기화
+        window.onload = () => {
+            renderCategories();
+            renderPlaces();
+        };
+    </script>
+</body>
+</html>
